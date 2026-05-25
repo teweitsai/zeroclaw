@@ -221,7 +221,7 @@ impl EmailChannel {
     /// successfully retrieved messages are not re-fetched if a later chunk fails.
     async fn fetch_unseen(&self, session: &mut ImapSession) -> Result<Vec<ParsedEmail>> {
         // Search for unseen messages
-        let uids = session.uid_search("UNSEEN").await?;
+        let uids = session.uid_search("NEW").await?;
         if uids.is_empty() {
             return Ok(Vec::new());
         }
@@ -239,7 +239,7 @@ impl EmailChannel {
                 .join(",");
 
             // Fetch message bodies for this chunk
-            let messages = session.uid_fetch(&uid_set, "RFC822").await?;
+            let messages = session.uid_fetch(&uid_set, "BODY[]").await?;
             let messages: Vec<Fetch> = messages.try_collect().await?;
 
             for msg in messages {
