@@ -98,6 +98,7 @@ pub use zeroclaw_tools::pushover::PushoverTool;
 pub use zeroclaw_tools::reaction::ReactionTool;
 pub use zeroclaw_tools::report_template_tool::ReportTemplateTool;
 pub use zeroclaw_tools::screenshot::ScreenshotTool;
+pub use zeroclaw_tools::send_email::SendEmailTool;
 pub use zeroclaw_tools::sessions::{
     SessionDeleteTool, SessionResetTool, SessionsCurrentTool, SessionsHistoryTool,
     SessionsListTool, SessionsSendTool,
@@ -407,6 +408,7 @@ pub fn all_tools_with_runtime(
         Arc::new(CalculatorTool::new()),
         Arc::new(WeatherTool::new()),
         Arc::new(CanvasTool::new(canvas_store.unwrap_or_default())),
+        Arc::new(SendEmailTool::new(config.channels.email.clone())),
     ];
 
     // Register discord_search if discord_history channel is configured
