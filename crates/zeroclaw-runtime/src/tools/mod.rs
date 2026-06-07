@@ -63,6 +63,7 @@ pub use zeroclaw_tools::data_management::DataManagementTool;
 pub use zeroclaw_tools::discord_search::DiscordSearchTool;
 pub use zeroclaw_tools::email_read::EmailReadTool;
 pub use zeroclaw_tools::email_search::EmailSearchTool;
+pub use zeroclaw_tools::email_send::EmailSendTool;
 pub use zeroclaw_tools::escalate::EscalateToHumanTool;
 pub use zeroclaw_tools::file_download::FileDownloadTool;
 pub use zeroclaw_tools::file_edit::FileEditTool;
@@ -621,7 +622,8 @@ pub fn all_tools_with_runtime(
         }
     }
 
-    // email_search — registered when at least one email channel is enabled
+    // email_search, email_read, email_send — registered when at least one
+    // email channel is enabled
     {
         let email_configs: std::collections::HashMap<
             String,
@@ -651,6 +653,7 @@ pub fn all_tools_with_runtime(
                 Arc::clone(&configs),
                 auth_service,
             )));
+            tool_arcs.push(Arc::new(EmailSendTool::new(Arc::clone(&configs))));
         }
     }
 

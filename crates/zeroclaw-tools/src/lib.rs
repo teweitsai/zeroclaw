@@ -25,6 +25,7 @@ pub mod discord_search;
 pub mod email_imap;
 pub mod email_read;
 pub mod email_search;
+pub mod email_send;
 pub mod escalate;
 pub mod file_download;
 pub mod file_edit;

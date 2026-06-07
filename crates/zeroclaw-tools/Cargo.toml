@@ -44,6 +44,7 @@ toml = "1.0"
 urlencoding = "2.1"
 uuid = { version = "1.22", default-features = false, features = ["v4", "std"] }
 which = "8.0"
+lettre = { version = "0.11.19", features = ["tokio1", "tokio1-native-tls", "tokio1-rustls"] }
 
 async-imap = { version = "0.11", features = ["runtime-tokio"], default-features = false }
 mail-parser = "0.11"
