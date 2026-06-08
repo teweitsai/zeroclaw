@@ -63,9 +63,26 @@ impl Tool for SendEmailTool {
         json!({
             "type": "object",
             "properties": {
-                "to": {
-                    "type": "string",
-                    "description": "The recipient's email address"
+                "recipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "The recipient's email address"
+                    }
+                },
+                "ccs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Optional CC email addresses"
+                    }
+                },
+                "bccs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Optional BCC email addresses"
+                    }
                 },
                 "subject": {
                     "type": "string",
@@ -76,7 +93,7 @@ impl Tool for SendEmailTool {
                     "description": "The plain text body content of the email"
                 }
             },
-            "required": ["to", "subject", "body"]
+            "required": ["recipients", "subject", "body"]
         })
     }
 
@@ -84,9 +101,9 @@ impl Tool for SendEmailTool {
     // wrap the returned JSON payload in your ToolResult enum/struct accordingly.
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         // Extract arguments provided by the AI
-        let to = args["to"]
-            .as_str()
-            .context("Missing or invalid 'to' field")?;
+        let recipients = args["recipients"]
+            .as_array()
+            .context("Missing or invalid 'recipients' field")?;
         let subject = args["subject"]
             .as_str()
             .context("Missing or invalid 'subject' field")?;
@@ -94,25 +111,51 @@ impl Tool for SendEmailTool {
             .as_str()
             .context("Missing or invalid 'body' field")?;
 
+        let default_ccs = vec![];
+        let default_bccs = vec![];
+
+        let ccs = args["ccs"].as_array().unwrap_or(&default_ccs);
+        let bccs = args["bccs"].as_array().unwrap_or(&default_bccs);
+
         // Load credentials dynamically at execution time
         let smtp_config = self
             .get_smtp_config()
             .context("Email config is not set in config.toml.")?;
 
         // Build the email message
-        let email = Message::builder()
-            .from(
-                smtp_config
-                    .from_address
-                    .parse()
-                    .context("Invalid 'from_address' in config")?,
-            )
-            .to(to
+        let mut builder = Message::builder().from(
+            smtp_config
+                .from_address
                 .parse()
-                .context("Invalid 'to' address provided by agent")?)
-            .subject(subject)
-            .body(String::from(body))
-            .context("Failed to build the email message")?;
+                .context("Invalid 'from_address' in config")?,
+        );
+
+        for recipient in recipients {
+            builder = builder.to(recipient
+                .as_str()
+                .context("Invalid recipient email address in 'recipients' array")?
+                .parse()
+                .context("Invalid 'to' address provided by agent")?);
+        }
+
+        for cc in ccs {
+            builder = builder.cc(cc
+                .as_str()
+                .context("Invalid CC email address in 'ccs' array")?
+                .parse()
+                .context("Invalid 'cc' address provided by agent")?);
+        }
+
+        for bcc in bccs {
+            builder = builder.bcc(
+                bcc.as_str()
+                    .context("Invalid BCC email address in 'bccs' array")?
+                    .parse()
+                    .context("Invalid 'bcc' address provided by agent")?,
+            );
+        }
+
+        let email = builder.subject(subject).body(String::from(body))?;
 
         // Authenticate and construct the async SMTP transport
         let creds = Credentials::new(smtp_config.username, smtp_config.password);
